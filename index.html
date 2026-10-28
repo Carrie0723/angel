@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="DPRGTty1D02BvAhz21fl88">
+<head data-page-node-id="DNpkeNoYsgSU6LMPIRuIdg">
+<meta charset="UTF-8" data-page-node-id="R9pOVL7SXyYFFpMw8Ho7Mc">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="LFGSBLNc2EiEIKbGrLdVEM">
+<title>为发作性睡病发声——李雨的故事</title>
+<style>
+  :root{
+    --bg:#0b0b0b;
+    --ink:#e8e6e1;
+    --dim:#8a8884;
+    --paper:#111111;
+    --line:#2c2c2c;
+    --white:#f5f4f1;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
+    font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    letter-spacing:.06em;}
+  #stage{position:fixed;inset:0;overflow:hidden;}
+
+  /* ---------- 场景容器 ---------- */
+  .scene{position:absolute;inset:0;opacity:0;pointer-events:none;
+    transition:opacity 1.6s ease;display:flex;align-items:center;justify-content:center;}
+  .scene.active{opacity:1;pointer-events:auto;}
+
+  /* ---------- 字幕 / 独白 ---------- */
+  #subtitle{position:fixed;left:0;right:0;bottom:9%;text-align:center;z-index:60;
+    padding:0 8%;font-size:clamp(16px,2.2vw,24px);line-height:2;color:var(--white);
+    text-shadow:0 2px 12px rgba(0,0,0,.9);opacity:0;transition:opacity .9s ease;
+    pointer-events:none;}
+  #subtitle.show{opacity:1;}
+  #subtitle .muted{color:var(--dim);}
+
+  /* ---------- 顶部状态 ---------- */
+  #topbar{position:fixed;top:0;left:0;right:0;z-index:80;display:flex;
+    justify-content:space-between;align-items:center;padding:16px 22px;
+    opacity:0;transition:opacity 1s;pointer-events:none;}
+  #topbar.show{opacity:1;pointer-events:auto;}
+  #topbar .tag{font-size:12px;color:var(--dim);letter-spacing:.3em;}
+  #soundBtn{background:none;border:1px solid var(--line);color:var(--dim);
+    font-size:12px;padding:6px 14px;cursor:pointer;letter-spacing:.2em;
+    transition:all .3s;}
+  #soundBtn:hover{color:var(--white);border-color:var(--dim);}
+
+  /* ---------- 开场 ---------- */
+  #intro{background:var(--bg);flex-direction:column;text-align:center;padding:6%;}
+  #intro .line{opacity:0;transform:translateY(14px);transition:all 1.4s ease;
+    font-size:clamp(17px,2.4vw,26px);line-height:2.3;color:var(--ink);}
+  #intro .line.late{color:var(--dim);}
+  #intro .line.show{opacity:1;transform:none;}
+  #intro .enter{margin-top:7vh;opacity:0;transition:opacity 1.4s ease;}
+  #intro .enter.show{opacity:1;}
+  .btn{display:inline-block;border:1px solid var(--dim);color:var(--ink);
+    background:transparent;padding:14px 46px;font-size:15px;letter-spacing:.4em;
+    cursor:pointer;transition:all .35s;text-indent:.4em;}
+  .btn:hover{background:var(--white);color:#000;border-color:var(--white);}
+
+  /* ---------- 教室（第一人称） ---------- */
+  #classroom{background:#0d0d0d;}
+  .room{position:absolute;inset:0;overflow:hidden;perspective:900px;}
+  /* 后墙与黑板 */
+  .backwall{position:absolute;left:10%;right:10%;top:6%;bottom:32%;
+    background:linear-gradient(#141414,#0f0f0f);border:1px solid #1c1c1c;
+    box-shadow:inset 0 0 80px rgba(0,0,0,.8);}
+  .blackboard{position:absolute;left:14%;right:14%;top:10%;bottom:8%;
+    background:#101210;border:10px solid #1e1c19;box-shadow:0 4px 30px rgba(0,0,0,.7),
+    inset 0 0 60px rgba(0,0,0,.6);}
+  .blackboard .math{position:absolute;left:6%;top:26%;font-size:clamp(14px,2vw,22px);
+    color:#cfd2c8;opacity:0;transition:opacity 1.2s;font-family:Georgia,serif;}
+  .blackboard .math.show{opacity:.9;}
+  .chalkline{position:absolute;height:1px;background:rgba(230,230,220,.45);
+    width:0;transition:width 2.2s ease;}
+  .chalkline.show{width:var(--w,60%);}
+  /* 老师 */
+  .teacher{position:absolute;left:50%;bottom:-4%;transform:translateX(-50%);
+    width:26%;height:70%;opacity:.9;}
+  .teacher .head{position:absolute;left:50%;top:0;transform:translateX(-50%);
+    width:22%;aspect-ratio:1/1.15;background:#1a1a1a;border-radius:48% 48% 42% 42%;}
+  .teacher .body{position:absolute;left:50%;top:16%;transform:translateX(-50%);
+    width:52%;height:84%;background:#161616;border-radius:38% 38% 6% 6%;}
+  /* 窗光 */
+  .windowlight{position:absolute;top:0;bottom:0;width:34%;pointer-events:none;}
+  .wl-left{left:0;background:linear-gradient(105deg,rgba(235,232,220,.10),transparent 70%);}
+  .wl-right{right:0;background:linear-gradient(-105deg,rgba(235,232,220,.08),transparent 70%);}
+  /* 同学轮廓 */
+  .classmate{position:absolute;bottom:0;width:13%;height:34%;background:#121212;
+    border-radius:44% 44% 0 0;opacity:.85;}
+  .cm1{left:4%;} .cm2{left:20%;height:30%;} .cm3{right:4%;} .cm4{right:20%;height:31%;}
+  /* 课桌（第一人称桌沿） */
+  .desk{position:absolute;left:-6%;right:-6%;bottom:-6%;height:30%;
+    background:linear-gradient(#181614,#0c0b0a);border-top:1px solid #26231f;
+    box-shadow:0 -6px 24px rgba(0,0,0,.6);}
+  .desk .grain{position:absolute;inset:0;opacity:.35;
+    background:repeating-linear-gradient(93deg,transparent 0 46px,rgba(255,255,255,.02) 46px 48px);}
+  /* 空教室状态 */
+  .room.empty .teacher,.room.empty .classmate{opacity:0;transition:opacity 2s;}
+  .room.empty .windowlight{filter:brightness(1.6);}
+  /* 提示气泡 */
+  .hint{position:absolute;left:50%;transform:translateX(-50%);font-size:13px;
+    color:var(--dim);letter-spacing:.3em;text-indent:.3em;animation:breathe 2.4s infinite;}
+  @keyframes breathe{0%,100%{opacity:.35;}50%{opacity:.9;}}
+  #hintStand{bottom:36%;}
+  #hintNext{bottom:14%;}
+
+  /* 睡意滤镜 */
+  #sleepfx{position:absolute;inset:0;pointer-events:none;opacity:0;z-index:40;
+    backdrop-filter:blur(0px);transition:all 1.2s ease;}
+  #sleepfx .vignette{position:absolute;inset:-10%;
+    background:radial-gradient(ellipse at center,transparent 30%,rgba(0,0,0,.96) 78%);}
+  .drowsy1 #sleepfx{opacity:.5;backdrop-filter:blur(1.5px);}
+  .drowsy2 #sleepfx{opacity:.85;backdrop-filter:blur(4px);}
+  .drowsy3 #sleepfx{opacity:1;backdrop-filter:blur(9px);}
+  .swaying{animation:sway 5s ease-in-out infinite;}
+  @keyframes sway{0%,100%{transform:translate(0,0) rotate(0);}33%{transform:translate(4px,3px) rotate(.4deg);}66%{transform:translate(-5px,2px) rotate(-.4deg);}}
+
+  /* 黑屏 */
+  #blackscreen{background:#000;z-index:50;}
+  #blackscreen .voice{position:absolute;left:0;right:0;text-align:center;
+    font-size:clamp(15px,2vw,22px);line-height:2.4;opacity:0;transition:opacity 1.1s;}
+  #blackscreen .voice.show{opacity:1;}
+  .voice.mock{color:#c9c7c2;font-style:italic;}
+  .voice.far{color:#57554f;}
+  #blackscreen .eyes{position:absolute;inset:0;}
+  #blackscreen .eyes::after{content:"";position:absolute;inset:0;background:#000;
+    animation:eyelid 3.2s ease forwards;opacity:0;}
+  @keyframes eyelid{0%{opacity:0;}30%{opacity:0;}60%{opacity:1;}100%{opacity:1;}}
+  /* 醒来：桌面 */
+  #wakeview{background:#0a0a0a;}
+  #wakeview .desktop{position:absolute;left:0;right:0;top:44%;bottom:0;
+    background:linear-gradient(#191612,#0d0c0a);}
+  #wakeview .arm{position:absolute;left:12%;bottom:8%;width:56%;height:26%;
+    background:linear-gradient(#232019,#15130f);border-radius:60% 40% 0 0/90% 60% 0 0;
+    transform:rotate(-4deg);}
+  #wakeview .upward{transition:transform 2.4s ease;}
+  .risen #wakeview .upward{transform:translateY(-16%) scale(1.04);}
+
+  /* ---------- 房间（六年后） ---------- */
+  #bedroom{background:#060606;}
+  .bedroomwrap{position:absolute;inset:0;overflow:hidden;}
+  .door{position:absolute;right:14%;top:12%;bottom:34%;width:20%;
+    background:#0e0d0b;border-left:1px solid #1f1d18;box-shadow:-8px 0 40px rgba(0,0,0,.6);}
+  .doorgap{position:absolute;left:38%;top:6%;bottom:0;width:24%;
+    background:linear-gradient(180deg,rgba(240,236,220,.5),rgba(240,236,220,.14));
+    filter:blur(1px);}
+  .doorglow{position:absolute;right:6%;top:8%;bottom:30%;width:34%;
+    background:radial-gradient(ellipse at 62% 60%,rgba(240,234,210,.14),transparent 65%);
+    pointer-events:none;}
+  .dresser{position:absolute;right:30%;bottom:26%;width:16%;height:22%;
+    background:#0d0c0a;border-top:2px solid #1c1a16;}
+  .mirror{position:absolute;left:6%;bottom:12%;width:64%;aspect-ratio:3/4;
+    background:#0a0a0a;border:1px solid #22201b;cursor:pointer;
+    box-shadow:0 0 60px rgba(0,0,0,.8), inset 0 0 40px rgba(0,0,0,.9);
+    transition:all .8s;overflow:hidden;}
+  .mirror::before{content:"";position:absolute;inset:0;
+    background:linear-gradient(160deg,rgba(235,230,215,.05) 0%,transparent 40%,
+      rgba(235,230,215,.03) 62%,transparent 80%);}
+  .mirror .hint{left:50%;bottom:10%;transform:translateX(-50%);}
+  .mirror:hover{border-color:#3a372f;}
+  /* 镜中像 */
+  .reflection{position:absolute;inset:0;opacity:0;transition:opacity 1.6s ease;}
+  .mirror.zoom{position:absolute;left:50%;top:50%;width:min(72vw,560px);
+    aspect-ratio:3/4;transform:translate(-50%,-50%);cursor:default;z-index:30;}
+  .mirror.zoom .reflection{opacity:1;}
+  .mirror.zoom .hint{opacity:0;}
+  .figure{position:absolute;left:50%;bottom:0;transform:translateX(-50%);
+    width:56%;height:88%;}
+  .figure .neck{position:absolute;left:50%;top:0;transform:translateX(-50%);
+    width:16%;height:16%;background:#181613;border-radius:0 0 40% 40%;}
+  .figure .shoulders{position:absolute;left:50%;top:13%;transform:translateX(-50%);
+    width:78%;height:60%;background:#151310;border-radius:34% 34% 8% 8%;}
+  .figure .arm-l{position:absolute;left:8%;top:26%;width:14%;height:52%;
+    background:#141210;border-radius:40% 40% 20% 20%;transform:rotate(9deg);}
+  .figure .arm-r{position:absolute;right:8%;top:26%;width:14%;height:52%;
+    background:#141210;border-radius:40% 40% 20% 20%;transform:rotate(-9deg);}
+  /* 伤疤：黑白中用阴影纹理表现 */
+  .scar{position:absolute;border-radius:50%;opacity:.7;
+    background:radial-gradient(ellipse,rgba(0,0,0,.85),rgba(70,68,60,.35) 60%,transparent 75%);}
+  .scar.mix{background:radial-gradient(ellipse,rgba(40,38,32,.9),rgba(90,86,74,.3) 55%,transparent 72%);}
+  .s1{width:26px;height:14px;left:16%;top:34%;transform:rotate(24deg);}
+  .s2{width:18px;height:26px;left:13%;top:47%;transform:rotate(-12deg);}
+  .s3{width:30px;height:12px;right:15%;top:38%;transform:rotate(-30deg);}
+  .s4{width:14px;height:20px;right:12%;top:52%;transform:rotate(18deg);}
+  .scar.collar{left:50%;top:14%;transform:translateX(-50%) rotate(6deg);width:20px;height:10px;}
+  /* 病房光斑扫过 */
+  .lightscan{position:absolute;inset:0;pointer-events:none;opacity:0;
+    background:linear-gradient(75deg,transparent 30%,rgba(240,234,214,.06) 50%,transparent 68%);
+    transition:opacity 2s;}
+  .mirror.zoom .lightscan{opacity:1;animation:scan 7s ease-in-out infinite;}
+  @keyframes scan{0%,100%{transform:translateX(-8%);}50%{transform:translateX(8%);}}
+
+  /* 结束语 */
+  #ending{background:#000;flex-direction:column;text-align:center;padding:8% 10%;}
+  #ending .line{opacity:0;transform:translateY(10px);transition:all 1.3s ease;
+    font-size:clamp(15px,2.1vw,23px);line-height:2.4;color:var(--ink);}
+  #ending .line.dim{color:var(--dim);font-size:clamp(13px,1.8vw,19px);}
+  #ending .line.strong{color:var(--white);font-weight:600;letter-spacing:.14em;}
+  #ending .line.show{opacity:1;transform:none;}
+  #ending .actions{margin-top:6vh;opacity:0;transition:opacity 1.3s;}
+  #ending .actions.show{opacity:1;}
+
+  /* ---------- 了解更多 ---------- */
+  #learn{background:var(--bg);overflow-y:auto;justify-content:flex-start;
+    display:block;padding:0;opacity:1;transition:opacity 1.2s;}
+  #learn:not(.active){display:none;}
+  .learn-inner{max-width:820px;margin:0 auto;padding:12vh 6% 14vh;}
+  .learn-inner h2{text-align:center;font-size:clamp(20px,3vw,30px);letter-spacing:.5em;
+    text-indent:.5em;color:var(--white);margin-bottom:10px;}
+  .learn-inner .sub{text-align:center;color:var(--dim);font-size:13px;letter-spacing:.25em;margin-bottom:9vh;}
+  .card{border:1px solid var(--line);background:var(--paper);padding:44px 40px;margin-bottom:34px;
+    opacity:0;transform:translateY(26px);transition:all .9s ease;}
+  .card.show{opacity:1;transform:none;}
+  .card h3{font-size:17px;letter-spacing:.35em;color:var(--white);margin-bottom:8px;}
+  .card .en{font-size:11px;color:var(--dim);letter-spacing:.2em;margin-bottom:26px;}
+  .card ul{list-style:none;}
+  .card li{position:relative;padding-left:22px;margin-bottom:20px;line-height:1.95;
+    color:#c4c2bc;font-size:14.5px;}
+  .card li::before{content:"";position:absolute;left:0;top:.85em;width:8px;height:1px;background:var(--dim);}
+  .card b{color:var(--white);font-weight:600;}
+  .statrow{display:flex;gap:26px;flex-wrap:wrap;margin-top:6px;}
+  .stat{flex:1;min-width:150px;border:1px solid var(--line);padding:20px 18px;text-align:center;}
+  .stat .num{font-size:26px;color:var(--white);font-family:Georgia,serif;margin-bottom:8px;}
+  .stat .lbl{font-size:12px;color:var(--dim);line-height:1.8;}
+  .learn-back{text-align:center;margin-top:7vh;}
+  .source{margin-top:9vh;padding-top:26px;border-top:1px solid var(--line);
+    font-size:12px;color:var(--dim);line-height:2;letter-spacing:.05em;}
+  .final-plea{text-align:center;margin:10vh 0 4vh;}
+  .final-plea p{font-size:clamp(17px,2.4vw,26px);line-height:2.3;color:var(--white);letter-spacing:.12em;}
+  .final-plea p.small{font-size:13px;color:var(--dim);margin-top:26px;letter-spacing:.25em;}
+
+  /* 点击继续提示（通用） */
+  #clickany{position:fixed;inset:0;z-index:70;cursor:pointer;display:none;}
+  #clickany.on{display:block;}
+
+  /* 淡幕 */
+  #fade{position:fixed;inset:0;background:#000;z-index:90;opacity:0;
+    pointer-events:none;transition:opacity 1.6s ease;}
+  #fade.on{opacity:1;pointer-events:auto;}
+
+  /* 嘲笑声字幕（黑屏期间） */
+  #mockCaptions{position:fixed;inset:0;z-index:95;pointer-events:none;display:none;}
+  .mockcap{position:absolute;font-size:clamp(13px,1.7vw,18px);color:#b7b5ae;
+    font-style:italic;opacity:0;transition:opacity .8s;letter-spacing:.08em;}
+  .mockcap.show{opacity:.9;}
+</style>
+</head>
+<body data-page-node-id="cFb9eY2mqsuRw3FHHC2WGs">
+
+<div id="stage" data-page-node-id="qjS8CRqONMYQNFRS4ZuKWm">
+
+  <!-- 开场 -->
+  <section class="scene active" id="intro" data-page-node-id="YQIbArRpSgljSpW2jYf2XE">
+    <div class="line" data-i="0" data-page-node-id="RAsYJd72zbHqSaIg1f4nVP">我们过着再平常不过的日子，</div>
+    <div class="line late" data-i="1" data-page-node-id="tGIbea7SJNiOHkBkFDYRGN">可在看不见的角落，</div>
+    <div class="line late" data-i="2" data-page-node-id="tYuQxmQXB5Qz0RDvW66qaZ">这种生活却是一些人梦寐以求的。</div>
+    <div class="line" data-i="3" style="margin-top:5vh;color:#f5f4f1;font-weight:600;" data-page-node-id="KmiIEaPteoSG1yN87oVO92">现在，成为他们，感受他们的世界。</div>
+    <div class="enter" data-i="4" data-page-node-id="flM3ZYdr3M73KmsJbuG48m">
+      <button class="btn" id="startBtn" data-page-node-id="RTZCjAeSBsgDUQGbNT3O6S">开始体验</button>
+      <div style="margin-top:22px;font-size:12px;color:#8a8884;letter-spacing:.2em;" data-page-node-id="WdEqrxsdKF62zIoC2ebUDG">建议佩戴耳机 · 全程约 3 分钟</div>
+    </div>
+  </section>
+
+  <!-- 场景1：课堂 -->
+  <section class="scene" id="classroom" data-page-node-id="9hqYHOzizp2V6sI8K6MAfC">
+    <div class="room" id="classRoom" data-page-node-id="pzYz1scBHVkO1IV2EOxWpD">
+      <div class="backwall" data-page-node-id="KekWqi87weeqC3S7NdFuIY">
+        <div class="blackboard" data-page-node-id="dJqjMxKghsMFtxv9f5W2bD">
+          <div class="math" id="mathText" data-page-node-id="U9zL8AGze2vZcdjHHHHuw4">已知 (2x+3)(x−5)=0，求 x 的值</div>
+          <div class="chalkline" id="chalk1" style="left:6%;top:46%;" data-w="52%" data-page-node-id="nstUOsxUjnWbIDyf0xEDtZ"></div>
+          <div class="chalkline" id="chalk2" style="left:6%;top:58%;" data-w="64%" data-page-node-id="Zv1RV5cu2HkV4TwfIHEmqF"></div>
+        </div>
+      </div>
+      <div class="teacher" data-page-node-id="vfFhpUubDMTCvCVgjzBwDo"><div class="head" data-page-node-id="3nWPRJV2vACW7gHKxMJg1A"></div><div class="body" data-page-node-id="0B57V6FLdkC4q5J7ZbvYFr"></div></div>
+      <div class="classmate cm1" data-page-node-id="UI2pjG8z8f8569CFfLeBBr"></div><div class="classmate cm2" data-page-node-id="U6FX3tZZQtyRqf2DsHbNyT"></div>
+      <div class="classmate cm3" data-page-node-id="ZX1AwWPj4t28xd5Grrbzcy"></div><div class="classmate cm4" data-page-node-id="u3a1vcIDqkZY6lPeIMGoHB"></div>
+      <div class="windowlight wl-left" data-page-node-id="RmjNBSlPwSzY4wrFX0mkm9"></div><div class="windowlight wl-right" data-page-node-id="oGXnwhLvHOIfNmMa6w9Ktn"></div>
+      <div class="desk" data-page-node-id="j0IqlIrUuMo3zsqtwLjT0W"><div class="grain" data-page-node-id="WHLzshMvhO6PRfUe9MkZAM"></div></div>
+    </div>
+    <div id="sleepfx" data-page-node-id="LEMLEulR2H820TLO2Do70h"><div class="vignette" data-page-node-id="xeakyRRWQbg4NRSkWQqYOp"></div></div>
+    <div class="hint" id="hintStand" style="display:none;" data-page-node-id="yybeByPnQ6ibTGFJzfh1XF">点击 · 站起来</div>
+    <div class="hint" id="hintNext" style="display:none;" data-page-node-id="d4jQeIszH3tpUcXwEAu01C">点击 · 继续 ▸</div>
+  </section>
+
+  <!-- 黑屏（睡着） -->
+  <section class="scene" id="blackscreen" data-page-node-id="qBghPNWNOCQAjMXJYv3GRS">
+    <div class="voice far" id="vTeacher" data-page-node-id="eErekTQuqxgp32lXf44mQF">李雨？……李雨！</div>
+    <div class="voice mock" id="vMock" data-page-node-id="YvjcyIBJ1o2U7jjecwf6H6">“你看，睡神又睡着啦！”</div>
+    <div class="voice mock" id="vMock2" data-page-node-id="nW0Lm6NdKSbCnYiN16Es0w">“哈哈……她上课都能睡成这样……”</div>
+  </section>
+
+  <!-- 醒来（趴桌） -->
+  <section class="scene" id="wakeview" data-page-node-id="HdxEF3UIGwpmvCuY7hnn3v">
+    <div class="desktop upward" data-page-node-id="l1yIYE9hmQsi59KnkEhIYg"></div>
+    <div class="arm upward" data-page-node-id="55S7RcyIr1ClJurjieMXmf"></div>
+  </section>
+
+  <!-- 场景2：房间 -->
+  <section class="scene" id="bedroom" data-page-node-id="vSVvSV9oDyswsssYEI9zBv">
+    <div class="bedroomwrap" data-page-node-id="PrwL4O5VSi06EusuWWFgj0">
+      <div class="door" data-page-node-id="Mkvl7jktfxVuCARD8cFWPv"><div class="doorgap" data-page-node-id="lOe9HYabSWTIr3bw2Rx0Ax"></div></div>
+      <div class="doorglow" data-page-node-id="r5xskUx8j2hQrB5GPsNX4W"></div>
+      <div class="dresser" data-page-node-id="194mNm2U9yjGEq8A7Cf5o8"></div>
+      <div class="mirror" id="mirror" data-page-node-id="GrPhhYezmKhOopUt9eTFFI">
+        <div class="reflection" data-page-node-id="4yh9guPcp0OaWYDdC6ZVw2">
+          <div class="figure" data-page-node-id="0p25F5rZYRXZ7dVpZu83ff">
+            <div class="neck" data-page-node-id="sNwQEohXkVbe7LtuLUb3xh"></div>
+            <div class="scar collar" data-page-node-id="H7CbQ59aWFCjXKJEMTBGtc"></div>
+            <div class="shoulders" data-page-node-id="uxSLHNmbpSzEmkjMJmG3HV"></div>
+            <div class="arm-l" data-page-node-id="Qu9IpTWXVsZt8AHuVVD0ef">
+              <div class="scar s1" data-page-node-id="m8uXwmxc2F2zZJA9BMCsF4"></div><div class="scar mix s2" data-page-node-id="DMMBoHvweEAlH13HnVF1ps"></div>
+            </div>
+            <div class="arm-r" data-page-node-id="rA1gFZg7stFforrKcRPbhr">
+              <div class="scar s3" data-page-node-id="DQdkXzqqyzj3cNzN7CBfEu"></div><div class="scar mix s4" data-page-node-id="idVYhGVw8YzNYBIwlVfJcn"></div>
+            </div>
+          </div>
+        </div>
+        <div class="hint" data-page-node-id="8HAKYr9ABL6I7H9G77ZcxY">点击 · 镜子</div>
+        <div class="lightscan" data-page-node-id="IvA7u75g7IhzJuT5k1Cp2Y"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 结束语 -->
+  <section class="scene" id="ending" data-page-node-id="mcjboa55tWNHe13gCYBEHV">
+    <div class="line" data-i="0" data-page-node-id="fTFSDlXyB8YoM0BWH17hwW">这是李雨的真实经历。</div>
+    <div class="line dim" data-i="1" data-page-node-id="8C2bvg27HB7gS2MvvAMA0I">2013 年，13 岁的她开始出现症状。</div>
+    <div class="line dim" data-i="2" data-page-node-id="frTWgpvEpgiPYmsnFgO2Pk">六年里，她承受着误解、嘲笑和恐惧。</div>
+    <div class="line dim" data-i="3" data-page-node-id="t8XEwlomdZgiS2GVjEBAZA">直到 2019 年，19 岁时，她才被确诊为发作性睡病——</div>
+    <div class="line dim" data-i="4" data-page-node-id="hployqqYC4G7rDk7GWHu6z">一种罕见的神经系统疾病，患者会在白天不受控制地突然入睡。</div>
+    <div class="line strong" data-i="5" data-page-node-id="tCsPI7AfEdyccBTE6XFe7E">这不是懒惰，这是疾病。</div>
+    <div class="line strong" data-i="6" data-page-node-id="fZGr8p4XzBwe7KNK1KRpdC">请给予理解，而不是嘲笑。</div>
+    <div class="actions" data-i="7" data-page-node-id="BdpyNLsFMFDw1Gm0MIXLgU">
+      <button class="btn" id="learnBtn" data-page-node-id="EwNtO5qGfISSlcC8gjWfXY">了解更多</button>
+      <div style="margin-top:26px;" data-page-node-id="LpeijZbb1f4mlJX1CU6XSx"><a href="#" id="restart" style="color:#8a8884;font-size:12px;letter-spacing:.25em;text-decoration:none;" data-page-node-id="JNKFLvuPa4En9NX6CfayzG">↺ 重新体验</a></div>
+    </div>
+  </section>
+
+  <!-- 了解更多 -->
+  <section class="scene" id="learn" data-page-node-id="tQ30RzLQdqGmGM5R2gk7D5">
+    <div class="learn-inner" data-page-node-id="s6uK0hU8FC1bCpnuUUFXj1">
+      <h2 data-page-node-id="TIQmnmhQILU0EBFiU22F80">了解更多</h2>
+      <div class="sub" data-page-node-id="wpKqjo7M8mb2NSlPI7nkcj">关于发作性睡病 · NARCOLEPSY</div>
+
+      <div class="card" data-page-node-id="yBY4PN2V3ezYTunuJKkx0C">
+        <h3 data-page-node-id="qslEb8dzP6BuWMQNcuIngH">其他症状</h3>
+        <div class="en" data-page-node-id="79KfvTMn7EQievqOB2xOz7">OTHER SYMPTOMS</div>
+        <ul data-page-node-id="W19vSfN7CzZvpQv2JSISba">
+          <li data-page-node-id="f9lsGfNM7ki3jC2nuUIFnO"><b data-page-node-id="ejkEHii4nIafwOItJRzdvk">猝倒（Cataplexy）</b>——情绪激动（大笑、愤怒、惊喜）时突然肌肉无力，可能瘫倒在地。但患者意识完全清醒，知道发生了什么，持续数秒到数分钟后自行恢复。</li>
+          <li data-page-node-id="bDdFyUC6FMWIHtZ8h2CUZg"><b data-page-node-id="we1qNXsAOWjqD5y3LlVUna">睡眠瘫痪（Sleep Paralysis）</b>——醒来时暂时无法动弹或说话，意识清醒但身体无法控制，持续几秒到几分钟。</li>
+          <li data-page-node-id="HNNPEDonK8DfyfC74yxfGm"><b data-page-node-id="xDAxBjhS9h7bBO0awj2tIs">入睡幻觉（Hypnagogic Hallucinations）</b>——入睡或醒来时出现非常真实的幻觉（视觉、听觉、触觉），难以区分梦境与现实。</li>
+          <li data-page-node-id="ibKpx4U6XEQIeE4RJvqhqF"><b data-page-node-id="nho6kpefxvMoDTAXiWw05v">睡眠始发 REM（SOREMP）</b>——正常人需要 80–90 分钟才进入快速动眼睡眠（做梦阶段），发作性睡病患者几分钟内就会"掉进梦里"。</li>
+        </ul>
+      </div>
+
+      <div class="card" data-page-node-id="wKl5uAdT3IXVtJbJCVbHJz">
+        <h3 data-page-node-id="JrpdJs1Ybpa4kDpDJT2AFe">发病与诊断</h3>
+        <div class="en" data-page-node-id="LAjkBAnKpQIb7HRhSzYuGd">ONSET &amp; DIAGNOSIS</div>
+        <div class="statrow" data-page-node-id="dgCdoCIMXMf3FoUxtM2Svz">
+          <div class="stat" data-page-node-id="WIA1EzJrVdux5XQ1x63kOX"><div class="num" data-page-node-id="uMTH0DFMt0sxQEXwdD3ve4">0.2~0.5‰</div><div class="lbl" data-page-node-id="Ce0z55Vfi0iM2pCpWus0ji">全球发病率<br data-page-node-id="wIQpjnVIGeE1yoF55mJjCB">约万分之二至万分之五</div></div>
+          <div class="stat" data-page-node-id="6LXxI0gnwjOrUtATgpzfsU"><div class="num" data-page-node-id="neihiYmEf2AAW6H3j4KV16">10–25 岁</div><div class="lbl" data-page-node-id="gPxr55nygcOZR53RhHq2mM">多发年龄段<br data-page-node-id="WVyBNlnHECvZwjTyu1HKeo">青少年时期起病</div></div>
+          <div class="stat" data-page-node-id="2qmJaljM36y0uJxEB5dPNB"><div class="num" data-page-node-id="Do9kkWyAofPDbovs7kAU04">2–10 年</div><div class="lbl" data-page-node-id="EwWIj6WrjgB6tuO1sur4Ps">平均确诊延误<br data-page-node-id="fhGo82JznJBG6yvEvejqVX">长期被误解为"懒惰"</div></div>
+        </div>
+        <ul style="margin-top:26px;" data-page-node-id="ctgDyZQegFlrLiEEXbL6Sp">
+          <li data-page-node-id="5RtCAvNi4SX0ZPFRAIBUAz">发作性睡病是一种<b data-page-node-id="xhKCa3b1f9gGSpMhZqmFLQ">罕见的神经系统疾病</b>，可在任何年龄发生。</li>
+          <li data-page-node-id="xy0YfYqn6YXE1HQT1qFTqh">从出现症状到确诊，平均延误 <b data-page-node-id="1yHkjvHADyxBVL0UAx3MwP">2–10 年</b>。许多患者像李雨一样，长期被误解为"懒惰"或"不努力"。</li>
+          <li data-page-node-id="7eSbhwv45MpgCHEBOn7UUi">确诊需要专业神经内科医生评估，通过<b data-page-node-id="CfOTUyzGMS0iJr1waoy0Rp">多导睡眠监测（PSG）</b>和<b data-page-node-id="P8now2NPZB8r40QuFSVKRv">多次小睡潜伏期试验（MSLT）</b>完成。</li>
+        </ul>
+      </div>
+
+      <div class="card" data-page-node-id="8jht92q7vNE0qLiaUAIE89">
+        <h3 data-page-node-id="veT6P5w9LkxuQzg4PZx8lh">治疗与生活</h3>
+        <div class="en" data-page-node-id="roKRpfpJCGlVcGcGYr6SCF">TREATMENT &amp; LIFE</div>
+        <ul data-page-node-id="pYfiL7hQeybDSnrHFLMwlC">
+          <li data-page-node-id="cC8hJyEaGDIptjkrOOSrhU"><b data-page-node-id="HTLqEiMsPGGleeksPSks96">治疗方式</b>——目前无法根治，但可以通过药物（促醒剂、抗抑郁药等）和心理治疗综合管理，显著改善症状。</li>
+          <li data-page-node-id="s67vjyGjHgPaUFi69eAj2h"><b data-page-node-id="bDzCvDM5JwQo17IfJ93tR1">生活调整</b>——规律作息、安排短时间小睡、避免危险活动（如独自驾驶）、情绪管理，都能帮助患者更好地生活。</li>
+          <li data-page-node-id="9DdKnCwcEvdQeK19D6FKjx"><b data-page-node-id="DkD8LTT49WimJ7d7Pr0O54">症状改善</b>——在专业治疗和生活调整下，大多数患者的症状会逐步改善，可以重新参与学习、工作和社交。</li>
+          <li data-page-node-id="HpSTvOoTl7Ia0H5FkQG81t"><b data-page-node-id="aw9ba5FReviXAI5cCvZQ1n">需要理解和支持</b>——发作性睡病患者需要的不是指责，而是理解、包容和合理的支持。</li>
+        </ul>
+      </div>
+
+      <div class="final-plea" data-page-node-id="oioy1sxJrYrxJfJHG8BmTg">
+        <p data-page-node-id="PjAUjekpHlHqvsoFFYBwcb">请不要用"懒""不努力"来评价他们。</p>
+        <p class="small" data-page-node-id="NoGemGcCaNZTiaJoqG8Ytz">多一分了解 · 少一分误解</p>
+      </div>
+
+      <div class="learn-back" data-page-node-id="NV1eLiUTNJFMP0Z2R8S5xm"><button class="btn" id="backBtn" data-page-node-id="VZyw39Z7g08kffa7SaQ5vF">返回</button></div>
+
+      <div class="source" data-page-node-id="aN67hhwhp72FoQbmLnVb87">
+        信息来源：李雨真实案例（武汉市中心医院，2019 年确诊）。13 岁起病，症状包括白天过度嗜睡、课堂睡眠发作、入睡幻觉、猝倒；六年间不敢单独出门；19 岁确诊并接受药物与心理综合治疗。<br data-page-node-id="zdF8YXIW5zUitNzsKmr7sb">
+        ※ 医学数据基于公开案例资料整理，实际使用前建议进一步核实。
+      </div>
+    </div>
+  </section>
+
+  <!-- 字幕 -->
+  <div id="subtitle" data-page-node-id="qco7fatKZtRC5BEG84t5Ng"></div>
+
+  <!-- 嘲笑字幕 -->
+  <div id="mockCaptions" data-page-node-id="zGA9Rk4izq4lw5ilhYHzeR">
+    <div class="mockcap" style="left:18%;top:26%;" data-page-node-id="d4dcqypsydYdLZIwFZEAdi">“哈哈，睡神！”</div>
+    <div class="mockcap" style="right:14%;top:34%;" data-page-node-id="gACWsfZqQbl9mXtE9ocXjl">“她又睡着了——”</div>
+    <div class="mockcap" style="left:24%;bottom:30%;" data-page-node-id="cFjUE3TZqgcz25gqh1CV8T">“啧，怎么可能有这种病，就是懒吧。”</div>
+    <div class="mockcap" style="right:20%;bottom:22%;" data-page-node-id="bOZNg3B6c9qIb9McY5ypAz">（笑声）</div>
+  </div>
+
+  <div id="topbar" data-page-node-id="SJieuSsEGqwTmhQZeNBvzB">
+    <div class="tag" id="sceneTag" data-page-node-id="PGqzeAFrCBW1bisHVCXczN"></div>
+    <button id="soundBtn" data-page-node-id="X6kt9n76bQK8di23fEnYrS">声音：开</button>
+  </div>
+
+  <div id="fade" data-page-node-id="W4cI67ApeO45du9XDiX5p8"></div>
+  <div id="clickany" data-page-node-id="WanNokFd7OGHfVFeUPLEjy"></div>
+</div>
+
+<script>
+/* ============================================================
+   为发作性睡病发声——李雨的故事
+   交互叙事：开场 → 课堂 → 房间 → 结束语 → 了解更多
+   ============================================================ */
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+const subtitle = $('#subtitle');
+const fade = $('#fade');
+const topbar = $('#topbar');
+const sceneTag = $('#sceneTag');
+const soundBtn = $('#soundBtn');
+
+/* ---------------- 音频（Web Audio 合成，无外部文件） ---------------- */
+const Audio_ = {
+  ctx:null, master:null, amb:null, enabled:true, heartTimer:null,
+  init(){
+    if(this.ctx) return;
+    this.ctx = new (window.AudioContext||window.webkitAudioContext)();
+    this.master = this.ctx.createGain();
+    this.master.gain.value = 1.0;
+    this.master.connect(this.ctx.destination);
+  },
+  /* 粉噪 + 低通 = 教室嗡嗡环境音 */
+  startAmbience(){
+    this.init();
+    if(this.amb) return;
+    const len = this.ctx.sampleRate * 2;
+    const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    let last = 0;
+    for(let i=0;i<len;i++){ const w = Math.random()*2-1; last = last*.97 + w*.03; d[i]=last*3.2; }
+    const src = this.ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    const lp = this.ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=420;
+    const g = this.ctx.createGain(); g.gain.value = .12;
+    src.connect(lp).connect(g).connect(this.master);
+    src.start(); this.amb = {src, g};
+    /* 轻微人声感的带通抖动 */
+    const bp = this.ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=900; bp.Q.value=1.4;
+    const g2 = this.ctx.createGain(); g2.gain.value=.015;
+    const lfo = this.ctx.createOscillator(); lfo.frequency.value=.5;
+    const lfoG = this.ctx.createGain(); lfoG.gain.value=400;
+    lfo.connect(lfoG).connect(bp.frequency); lfo.start();
+    const src2 = this.ctx.createBufferSource(); src2.buffer = buf; src2.loop = true;
+    src2.connect(bp).connect(g2).connect(this.master); src2.start();
+    this.amb.src2 = src2;
+  },
+  /* 困意：声音变慢变远 */
+  muffle(depth){
+    if(!this.amb) return;
+    const t = this.ctx.currentTime;
+    this.amb.g.gain.linearRampToValueAtTime(.12*(1-depth*.8), t+1.5);
+  },
+  /* 心跳 */
+  startHeart(){
+    this.init();
+    const beat = ()=>{
+      const t = this.ctx.currentTime;
+      const o = this.ctx.createOscillator(); o.type='sine';
+      o.frequency.setValueAtTime(58,t); o.frequency.exponentialRampToValueAtTime(38,t+.22);
+      const g = this.ctx.createGain();
+      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.5,t+.03);
+      g.gain.exponentialRampToValueAtTime(.001,t+.35);
+      o.connect(g).connect(this.master); o.start(t); o.stop(t+.4);
+    };
+    const loop = ()=>{ beat(); setTimeout(()=>beat(), 340); };
+    loop();
+    this.heartTimer = setInterval(loop, 1600);
+  },
+  stopHeart(){ if(this.heartTimer){ clearInterval(this.heartTimer); this.heartTimer=null; } },
+  /* 睡着：一切归于寂静 */
+  silence(){
+    if(this.amb){ const t=this.ctx.currentTime; this.amb.g.gain.linearRampToValueAtTime(0,t+2.5); }
+    this.stopHeart();
+  },
+  /* 醒来：极安静的空教室 */
+  faint(){
+    if(this.amb){ const t=this.ctx.currentTime; this.amb.g.gain.linearRampToValueAtTime(.03,t+4); }
+  },
+  /* 房间：近乎无声的低鸣 */
+  roomHum(){
+    this.init();
+    const o = this.ctx.createOscillator(); o.type='sine'; o.frequency.value=52;
+    const g = this.ctx.createGain(); g.gain.value=0;
+    o.connect(g).connect(this.master); o.start();
+    g.gain.linearRampToValueAtTime(.035, this.ctx.currentTime+3);
+    this.amb = this.amb||{}; this.amb.hum = {o,g};
+  },
+  toggle(){
+    this.enabled = !this.enabled;
+    if(this.master) this.master.gain.value = this.enabled? 1.0 : 0;
+    soundBtn.textContent = this.enabled? '声音：开' : '声音：关';
+  }
+};
+soundBtn.addEventListener('click', e=>{ e.stopPropagation(); Audio_.toggle(); });
+
+/* ---------------- 字幕控制 ---------------- */
+let subTimer = null;
+function showSub(text, hold=3000){
+  return new Promise(res=>{
+    clearTimeout(subTimer);
+    subtitle.classList.remove('show');
+    setTimeout(()=>{
+      subtitle.innerHTML = text;
+      subtitle.classList.add('show');
+      subTimer = setTimeout(()=>{ subtitle.classList.remove('show'); setTimeout(res,600); }, hold);
+    }, 350);
+  });
+}
+function hideSub(){ clearTimeout(subTimer); subtitle.classList.remove('show'); }
+
+/* ---------------- 场景切换 ---------------- */
+function goto(id){
+  $$('.scene').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+async function fadeThrough(mid){ /* 黑幕过渡 */
+  fade.classList.add('on'); await wait(1700);
+  if(mid) mid();
+  await wait(300); fade.classList.remove('on'); await wait(1500);
+}
+
+/* ---------------- 点击继续 ---------------- */
+function waitClick(){
+  return new Promise(res=>{
+    const c = $('#clickany'); c.classList.add('on');
+    const h = ()=>{ c.classList.remove('on'); c.removeEventListener('click',h); res(); };
+    c.addEventListener('click', h);
+  });
+}
+
+/* ============================================================
+   开场
+   ============================================================ */
+async function intro(){
+  const lines = $$('#intro .line');
+  for(const l of lines){ l.classList.add('show'); await wait(1300); }
+  $('#intro .enter').classList.add('show');
+  $('#startBtn').onclick = ()=>{ Audio_.init(); Audio_.startAmbience(); classroomScene(); };
+}
+
+/* ============================================================
+   场景1：课堂（初一，13岁）
+   ============================================================ */
+async function classroomScene(){
+  topbar.classList.add('show');
+  sceneTag.textContent = '场景一 · 课堂 · 初一';
+  const room = $('#classRoom');
+
+  await fadeThrough(()=>{ goto('#classroom'); });
+
+  /* 1. 上课中 */
+  await showSub('<span class="muted">（教室里，翻书声与讲课声混在一起）</span>', 3200);
+
+  /* 2. 被点名 */
+  await showSub('“李雨，你来回答这道题。”', 2600);
+  $('#mathText').classList.add('show');
+  await wait(1200);
+  $('#chalk1').classList.add('show');
+  await wait(700); $('#chalk2').classList.add('show');
+  await wait(1600);
+
+  /* 3. 站起来 */
+  $('#hintStand').style.display = 'block';
+  await waitClick();
+  $('#hintStand').style.display = 'none';
+  room.classList.add('risen');
+  $('#classroom').querySelector('.room').style.transition='transform 2s ease';
+  $('#classRoom').style.transform = 'translateY(-4%) scale(1.05)';
+  await showSub('“这道题首先要用因式分解……让每个因式等于零……所以 2x+3=0，或者 x−5=0……然后……”', 4600);
+
+  /* 4. 睡意来袭 */
+  room.classList.add('swaying');
+  const drowsyLines = [
+    '不行……我怎么又困了……',
+    '我得集中注意力……眼皮好重……',
+    '不……不行……'
+  ];
+  Audio_.startHeart();
+  const body = document.body;
+  for(let i=0;i<drowsyLines.length;i++){
+    body.classList.add('drowsy'+(i+1));
+    Audio_.muffle((i+1)/4);
+    await showSub(drowsyLines[i], 2400);
+  }
+  room.classList.remove('swaying');
+  await wait(1800);
+
+  /* 5. 睡着 / 黑屏 */
+  Audio_.silence();
+  await fadeThrough(()=>{
+    goto('#blackscreen');
+    $('#mockCaptions').style.display='block';
+  });
+  Audio_.stopHeart();
+  $('#vTeacher').classList.add('show');
+  await wait(2600);
+  $('#vTeacher').classList.remove('show'); await wait(900);
+  $('#vMock').classList.add('show');
+  $$('.mockcap')[0].classList.add('show'); $$('.mockcap')[1].classList.add('show');
+  await wait(2400);
+  $('#vMock').classList.remove('show'); $('#vMock2').classList.add('show');
+  $$('.mockcap')[2].classList.add('show'); $$('.mockcap')[3].classList.add('show');
+  await wait(2600);
+  $('#vMock2').classList.remove('show');
+  $$('.mockcap').forEach(m=>m.classList.remove('show'));
+  $('#mockCaptions').style.display='none';
+  await showSub('<span class="muted">（……）</span>', 2000);
+
+  /* 6. 醒来 */
+  goto('#wakeview');
+  await wait(2600);
+  document.body.classList.add('risen'); /* 抬头 */
+  $('#wakeview').style.transition='transform 2.4s ease';
+  $('#wakeview').style.transform='translateY(-10%) scale(1.06)';
+  Audio_.faint();
+  await fadeThrough(()=>{
+    goto('#classroom');
+    room.classList.add('empty');           /* 空教室 */
+    room.classList.remove('risen');
+    $('#classRoom').style.transform='';
+    room.classList.add('swaying2');
+    body.classList.remove('drowsy1','drowsy2','drowsy3');
+    room.style.filter='brightness(1.25)';
+    $('#mathText').classList.remove('show');
+    $$('.chalkline').forEach(c=>c.classList.remove('show'));
+  });
+  await showSub('（抬起头……教室空无一人。窗外的光，说明时间已经过去了很久。）', 4200);
+  await showSub('又是这样……<br>我明明已经休息得足够了，<br>为什么还是这样……', 4600);
+  room.classList.remove('swaying2');
+
+  /* 7. 场景结束 → 箭头 */
+  $('#hintNext').style.display='block';
+  await waitClick();
+  $('#hintNext').style.display='none';
+  bedroomScene();
+}
+
+/* ============================================================
+   场景2：六年后的房间
+   ============================================================ */
+async function bedroomScene(){
+  sceneTag.textContent = '场景二 · 六年后 · 房间';
+  const mirror = $('#mirror');
+
+  await fadeThrough(()=>{ goto('#bedroom'); Audio_.roomHum(); });
+  await wait(2400);
+
+  await showSub('我好想出去走走……<br>但是万一又倒在地上怎么办……<br>万一又被嘲笑怎么办……<br>还是算了吧……', 6200);
+  await wait(800);
+
+  /* 点击镜子 */
+  const clicked = new Promise(res=>{ mirror.addEventListener('click', res, {once:true}); });
+  await Promise.race([clicked, wait(12000).then(()=>{})]);
+  Audio_.silence();
+
+  /* 镜子放大 */
+  mirror.classList.add('zoom');
+  sceneTag.textContent = '场景二 · 镜中';
+  await wait(2200);
+  await showSub('（借着门缝透进的微光，手臂上、锁骨上……<br>摔倒留下的伤疤，隐约可见。）', 5600);
+  await showSub('上次摔倒的伤已经愈合了啊……<br>我好像已经很久没出去过了……', 5200);
+  await wait(1200);
+
+  /* 结尾：镜头上移，她又躺回床上 */
+  fade.classList.add('on');
+  await wait(3200);
+  bedroomEnding();
+}
+
+/* ============================================================
+   结束语
+   ============================================================ */
+async function bedroomEnding(){
+  goto('#ending');
+  window.scrollTo(0,0);
+  sceneTag.textContent = '';
+  Audio_.init();
+  const lines = $$('#ending .line');
+  for(const l of lines){ l.classList.add('show'); await wait(1500); }
+  $('#ending .actions').classList.add('show');
+  fade.classList.remove('on');
+
+  $('#learnBtn').onclick = ()=> learnPage();
+  $('#restart').onclick = e=>{ e.preventDefault(); location.reload(); };
+}
+
+/* ============================================================
+   了解更多
+   ============================================================ */
+function learnPage(){
+  goto('#learn');
+  sceneTag.textContent = '知识补充 · 关于发作性睡病';
+  const scene = $('#learn');
+  scene.style.opacity = 1;
+  requestAnimationFrame(()=>{
+    scene.style.overflowY = 'auto';
+  });
+  const cards = $$('#learn .card');
+  const io = new IntersectionObserver(es=>{
+    es.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('show'); });
+  },{threshold:.15});
+  cards.forEach(c=>io.observe(c));
+  setTimeout(()=>cards.forEach(c=>c.classList.add('show')), 400);
+  $('#backBtn').onclick = ()=>{
+    $$('#ending .line').forEach(l=>l.classList.add('show'));
+    $('#ending .actions').classList.add('show');
+    goto('#ending'); sceneTag.textContent='';
+  };
+}
+
+/* ---------------- 启动 ---------------- */
+intro();
+</script>
+</body>
+</html>
